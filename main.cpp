@@ -55,11 +55,49 @@ std::vector<bool> toBitMessage(const std::string &message)
 	return bit_string;
 }
 
+std::string printBits(const std::vector<bool> &message)
+{
+	std::string total;
+	int counter = 0;
+	for (bool bit : message)
+	{
+		total += std::to_string(static_cast<int>(bit)) + ", ";
+		if (++counter % 8 == 0)
+			total += "\n";
+	}
+	return total;
+}
+
+std::string printTransition(const std::vector<bool> &from, const std::vector<bool> &to)
+{
+	std::string total;
+	std::size_t multiplier = 0;
+	while ((multiplier * 8 + 8) < from.size())
+	{
+		for (int iterator = 0; iterator < 8; ++iterator)
+			total += std::to_string(static_cast<int>(from.at(iterator + multiplier * 8))) + ", ";
+		total += "=> ";
+		for (int iterator = 0; iterator < 8; ++iterator)
+			total += std::to_string(static_cast<int>(to.at(iterator + multiplier * 8))) + ", ";
+		++multiplier;
+		total += "\n";
+	}
+	return total;
+}
+
+bool firstBitOf(uint64_t value)
+{
+	return 0b1 & value;
+}
+
 int main(int argc, char *argv[])
 {
 	std::string in_message;
 	for (int iterator = 1; iterator < argc; ++iterator)
 		in_message += argv[iterator];
+	char in_value;
+	while ((in_value = std::cin.get()) != -1)
+		in_message.push_back(static_cast<char>(in_value));
 
 	std::mt19937_64 engine(std::time(nullptr)); // Generate a key
 	uint64_t key = 9145160492174859451;
@@ -72,31 +110,17 @@ int main(int argc, char *argv[])
 	{
 		engine = std::mt19937_64(key); // Seed the engine with the key
 
-		std::string random = std::to_string(std::time(nullptr));
 		std::vector<bool> message = toBitMessage(in_message); // Chop a message up into bits
-		std::cout << fromBitMessage(message);
 
 		for (bool bit : message)
 		{
 			uint64_t random = engine();
-			bool encrypted_bit = 0b1 & (random ^ static_cast<decltype(random)>(bit)); // XOR the bit with the random number's first bit
-			random ^= static_cast<uint64_t>(encrypted_bit);
+			bool encrypted_bit = firstBitOf(random) != bit; // XOR the bit with the random number's first bit
+			random ^= static_cast<uint64_t>(bit);
 			engine = std::mt19937_64(random);
 			encrypted_message.emplace_back(encrypted_bit);
 		}
-
-		// Print the result
-		int counter = 0;
-		for (bool bit : encrypted_message)
-		{
-			std::cout << static_cast<int>(bit) << ", ";
-			if (++counter % 8 == 0)
-				std::cout << '\n';
-		}
-		std::cout << fromBitMessage(encrypted_message) << '\n';
 	}
-
-	std::cout << '\n';
 
 	////////////////////////////////////////////////////////////
 	// Decryption
@@ -109,20 +133,12 @@ int main(int argc, char *argv[])
 		for (bool bit : encrypted_message)
 		{
 			uint64_t random = engine();
-			bool decrypted_bit = 0b1 & (random ^ static_cast<decltype(random)>(bit)); // XOR the bit with the random number's first bit
-			random ^= static_cast<uint64_t>(bit);
+			bool decrypted_bit = firstBitOf(random) != bit; // XOR the bit with the random number's first bit
+			random ^= static_cast<uint64_t>(decrypted_bit);
 			engine = std::mt19937_64(random);
 			decrypted_message.emplace_back(decrypted_bit);
 		}
 
-		// Print the result
-		int counter = 0;
-		for (bool bit : decrypted_message)
-		{
-			std::cout << static_cast<int>(bit) << ", ";
-			if (++counter % 8 == 0)
-				std::cout << '\n';
-		}
-		std::cout << fromBitMessage(decrypted_message) << '\n';
+		std::cout << printTransition(decrypted_message, encrypted_message);
 	}
 }
