@@ -55,7 +55,7 @@ std::vector<bool> toBitMessage(const std::string &message)
 	return bit_string;
 }
 
-int main()
+int main(int argc, char *argv[])
 {
 	std::mt19937_64 engine(std::time(nullptr)); // Generate a key
 	uint64_t key = engine();
@@ -68,13 +68,16 @@ int main()
 	{
 		engine = std::mt19937_64(key); // Seed the engine with the key
 
-		std::vector<bool> message = toBitMessage("Hello World!"); // Chop a message up into bits
+		std::string random = std::to_string(std::time(nullptr));
+		std::vector<bool> message = toBitMessage(argv[1]); // Chop a message up into bits
 		std::cout << fromBitMessage(message);
 
 		for (bool bit : message)
 		{
 			uint64_t random = engine();
 			bool encrypted_bit = 0b1 & (random ^ static_cast<decltype(random)>(bit)); // XOR the bit with the random number's first bit
+			random ^= static_cast<uint64_t>(encrypted_bit);
+			engine = std::mt19937_64(random);
 			encrypted_message.emplace_back(encrypted_bit);
 		}
 
@@ -103,6 +106,8 @@ int main()
 		{
 			uint64_t random = engine();
 			bool decrypted_bit = 0b1 & (random ^ static_cast<decltype(random)>(bit)); // XOR the bit with the random number's first bit
+			random ^= static_cast<uint64_t>(bit);
+			engine = std::mt19937_64(random);
 			decrypted_message.emplace_back(decrypted_bit);
 		}
 
