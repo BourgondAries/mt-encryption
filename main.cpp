@@ -57,8 +57,12 @@ std::vector<bool> toBitMessage(const std::string &message)
 
 int main(int argc, char *argv[])
 {
+	std::string in_message;
+	for (int iterator = 1; iterator < argc; ++iterator)
+		in_message += argv[iterator];
+
 	std::mt19937_64 engine(std::time(nullptr)); // Generate a key
-	uint64_t key = engine();
+	uint64_t key = 9145160492174859451;
 
 	std::vector<bool> encrypted_message; // Prepare a vector for the encrypted bits
 
@@ -69,7 +73,7 @@ int main(int argc, char *argv[])
 		engine = std::mt19937_64(key); // Seed the engine with the key
 
 		std::string random = std::to_string(std::time(nullptr));
-		std::vector<bool> message = toBitMessage(argv[1]); // Chop a message up into bits
+		std::vector<bool> message = toBitMessage(in_message); // Chop a message up into bits
 		std::cout << fromBitMessage(message);
 
 		for (bool bit : message)
